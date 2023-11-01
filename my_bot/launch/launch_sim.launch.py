@@ -29,6 +29,7 @@ def generate_launch_description():
     gazebo = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
                     get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
+                    launch_arguments={'world': './src/my_bot/worlds/obstacle.world'}.items()  # Specify the world file name here.
              )
 
     # Run the spawner node from the gazebo_ros package. The entity name doesn't really matter if you only have a single robot.
@@ -37,6 +38,14 @@ def generate_launch_description():
                                    '-entity', 'my_bot'],
                         output='screen')
 
+    spawn_entity_1 = Node(package='gazebo_ros', executable='spawn_entity.py',
+                        arguments=['-topic', 'robot_description',
+                                '-entity', 'my_bot_1',
+                                '-x', '1.0',   # X-coordinate
+                                '-y', '2.0',   # Y-coordinate
+                                '-z', '0.0',   # Z-coordinate
+                                '-Y', '1.57'],  # Yaw (orientation in radians)
+                        output='screen')
 
 
     # Launch them all!
@@ -44,4 +53,5 @@ def generate_launch_description():
         rsp,
         gazebo,
         spawn_entity,
+        # spawn_entity_1
     ])
