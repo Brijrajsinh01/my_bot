@@ -46,6 +46,17 @@ def generate_launch_description():
                                 '-z', '0.0',   # Z-coordinate
                                 '-Y', '1.57'],  # Yaw (orientation in radians)
                         output='screen')
+    # SLAM NODE
+    slam_toolbox = Node(
+        package='slam_toolbox',
+        executable='online_async_launch.py',
+        name='slam_toolbox_node',
+        output='screen',
+        parameters=[
+            {'params_file':'./src/my_bot/config/mapper_params_online_async.yaml'},
+            {'use_sim_time':True}
+        ]
+    )
 
 
     # Launch them all!
@@ -53,5 +64,5 @@ def generate_launch_description():
         rsp,
         gazebo,
         spawn_entity,
-        # spawn_entity_1
+        slam_toolbox
     ])
