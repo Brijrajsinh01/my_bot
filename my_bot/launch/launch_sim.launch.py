@@ -38,18 +38,12 @@ def generate_launch_description():
                                    '-entity', 'my_bot'],
                         output='screen')
 
-    spawn_entity_1 = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description',
-                                '-entity', 'my_bot_1',
-                                '-x', '1.0',   # X-coordinate
-                                '-y', '2.0',   # Y-coordinate
-                                '-z', '0.0',   # Z-coordinate
-                                '-Y', '1.57'],  # Yaw (orientation in radians)
-                        output='screen')
+    
+
     # SLAM NODE
-    slam_toolbox=IncludeLaunchDescription(
+    oled=IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'launch','slam_launch.py'
+                    get_package_share_directory(package_name),'scripts','oled.py'
                 )]), launch_arguments={'use_sim_time': 'true'}.items()
     )
 
@@ -70,6 +64,7 @@ def generate_launch_description():
         rsp,
         gazebo,
         spawn_entity,
-        slam_toolbox,
+        # slam_toolbox,
         rviz_node,
+        # oled
     ])
