@@ -47,15 +47,21 @@ def generate_launch_description():
                                 '-Y', '1.57'],  # Yaw (orientation in radians)
                         output='screen')
     # SLAM NODE
-    slam_toolbox = Node(
-        package='slam_toolbox',
-        executable='online_async_launch.py',
-        name='slam_toolbox_node',
+    slam_toolbox=IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory(package_name),'launch','slam_launch.py'
+                )]), launch_arguments={'use_sim_time': 'true'}.items()
+    )
+
+
+    # Rviz2 NODE
+    rviz_node= Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
         output='screen',
-        parameters=[
-            {'params_file':'./src/my_bot/config/mapper_params_online_async.yaml'},
-            {'use_sim_time':True}
-        ]
+        arguments=['-d', './src/my_bot/config/map.rviz'],
+
     )
 
 
@@ -64,5 +70,6 @@ def generate_launch_description():
         rsp,
         gazebo,
         spawn_entity,
-        slam_toolbox
+        slam_toolbox,
+        rviz_node,
     ])
