@@ -17,7 +17,7 @@ def generate_launch_description():
     # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
     # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
 
-    package_name='my_bot' #<--- CHANGE ME
+    package_name='my_bot' 
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
@@ -40,13 +40,14 @@ def generate_launch_description():
 
     
 
-    # SLAM NODE
-    oled=IncludeLaunchDescription(
+    # navigation NODE
+    nav_l=IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'scripts','oled.py'
+                    get_package_share_directory(package_name),'launch','navigation_launch.py'
                 )]), launch_arguments={'use_sim_time': 'true'}.items()
     )
 
+    
 
     # Rviz2 NODE
     rviz_node= Node(
@@ -61,10 +62,11 @@ def generate_launch_description():
 
     # Launch them all!
     return LaunchDescription([
+        # nav_l,
         rsp,
         gazebo,
         spawn_entity,
         # slam_toolbox,
         rviz_node,
-        # oled
+        
     ])
