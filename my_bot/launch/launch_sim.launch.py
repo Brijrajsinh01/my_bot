@@ -41,11 +41,14 @@ def generate_launch_description():
     
 
     # navigation NODE
-    nav_l=IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'launch','navigation_launch.py'
-                )]), launch_arguments={'use_sim_time': 'true'}.items()
-    )
+    nav_l=Node(
+            package=package_name,  # Replace with your actual package name
+            executable='python3',
+            name='my_script_node',
+            output='screen',
+            arguments=['python3 ./src/my_bot/scripts/navigation.py']
+        )
+        # Add more nodes or configurations as needed
 
     
 
@@ -62,7 +65,7 @@ def generate_launch_description():
 
     # Launch them all!
     return LaunchDescription([
-        # nav_l,
+        nav_l,
         rsp,
         gazebo,
         spawn_entity,
