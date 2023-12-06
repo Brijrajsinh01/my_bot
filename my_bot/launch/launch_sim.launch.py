@@ -32,11 +32,18 @@ def generate_launch_description():
                     launch_arguments={'world': './src/my_bot/worlds/obstacle.world'}.items()  # Specify the world file name here.
              )
 
+
     # Run the spawner node from the gazebo_ros package. The entity name doesn't really matter if you only have a single robot.
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description',
-                                   '-entity', 'my_bot'],
+                                '-entity', 'my_bot',
+                                '-x', '0.0',  # specify the X-coordinate of the initial position
+                                '-y', '0.0',  # specify the Y-coordinate of the initial position
+                                '-z', '0.0',  # specify the Z-coordinate of the initial position
+                                '-Y', '1.5708'  # specify the Yaw (orientation around the vertical axis) in radians
+                                ],
                         output='screen')
+
 
     
 
@@ -65,11 +72,12 @@ def generate_launch_description():
 
     # Launch them all!
     return LaunchDescription([
-        nav_l,
+        # nav_l,
         rsp,
         gazebo,
+        rviz_node,
         spawn_entity,
         # slam_toolbox,
-        rviz_node,
+        
         
     ])
