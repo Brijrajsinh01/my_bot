@@ -18,6 +18,8 @@ def generate_launch_description():
     # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
 
     package_name='my_bot' 
+    package_share_directory = get_package_share_directory(package_name)
+
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
@@ -43,20 +45,24 @@ def generate_launch_description():
                                 '-Y', '1.5708'  # specify the Yaw (orientation around the vertical axis) in radians
                                 ],
                         output='screen')
-
-
     
+        # Run the spawner node from the gazebo_ros package. The entity name doesn't really matter if you only have a single robot.
+    spawn_entity_1 = Node(package='gazebo_ros', executable='spawn_entity.py',
+                        arguments=['-topic', 'robot_description_1',
+                                '-entity', 'my_bot_1',
+                                '-x', '1.0',  # specify the X-coordinate of the initial position
+                                '-y', '0.0',  # specify the Y-coordinate of the initial position
+                                '-z', '0.0',  # specify the Z-coordinate of the initial position
+                                '-Y', '1.5708'  # specify the Yaw (orientation around the vertical axis) in radians
+                                ],
+                        output='screen')
 
-    # navigation NODE
-    nav_l=Node(
-            package=package_name,  # Replace with your actual package name
-            executable='python3',
-            name='my_script_node',
-            output='screen',
-            arguments=['python3 ./src/my_bot/scripts/navigation.py']
-        )
-        # Add more nodes or configurations as needed
 
+    nav_l = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory(package_name),'launch','script_launch.py'
+                )]), launch_arguments={'use_sim_time': 'true'}.items()
+    )
     
 
     # Rviz2 NODE
@@ -77,6 +83,7 @@ def generate_launch_description():
         gazebo,
         rviz_node,
         spawn_entity,
+        spawn_entity_1,
         # slam_toolbox,
         
         

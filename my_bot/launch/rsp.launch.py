@@ -19,6 +19,7 @@ def generate_launch_description():
     pkg_path = os.path.join(get_package_share_directory('my_bot'))
     xacro_file = os.path.join(pkg_path,'description','robot.urdf.xacro')
     robot_description_config = xacro.process_file(xacro_file)
+    robot_description_config_1 = xacro.process_file(xacro_file)
     
     # Create a robot_state_publisher node
     params = {'robot_description': robot_description_config.toxml(), 'use_sim_time': use_sim_time}
@@ -29,6 +30,14 @@ def generate_launch_description():
         parameters=[params]
     )
 
+    params_1 = {'robot_description': robot_description_config_1.toxml(), 'use_sim_time': use_sim_time}
+    node_robot_state_publisher_1= Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[params_1]
+    )
+
 
     # Launch!
     return LaunchDescription([
@@ -37,5 +46,6 @@ def generate_launch_description():
             default_value='false',
             description='Use sim time if true'),
 
-        node_robot_state_publisher
+        node_robot_state_publisher,
+        node_robot_state_publisher_1,
     ])

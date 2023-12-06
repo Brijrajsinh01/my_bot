@@ -36,5 +36,10 @@ install(
   DIRECTORY config description launch worlds scripts
   DESTINATION share/${PROJECT_NAME}
 )
+install(
+  PROGRAMS
+  scripts/navigation.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
