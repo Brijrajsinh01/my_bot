@@ -1,0 +1,8 @@
+<launch>
+
+  <!-- Launch Gazebo with an empty world -->
+  <node pkg="gazebo_ros" exec="gazebo" name="gazebo" output="screen" respawn="false" required="true">
+    <param name="world_name" value="$(find your_package_name)/worlds/empty.world"/>
+  </node>
+
+</launch>
