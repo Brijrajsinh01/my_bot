@@ -83,7 +83,7 @@ def generate_launch_description():
         gazebo,
         rviz_node,
         spawn_entity,
-        spawn_entity_1,
+        # spawn_entity_1,
         # slam_toolbox,
         
         

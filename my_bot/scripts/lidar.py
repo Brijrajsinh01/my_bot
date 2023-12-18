@@ -111,10 +111,10 @@ def lidar():
         # Print or use the min_distances dictionary as needed
         print(dis)
 
-    subscriber = node.create_subscription(LaserScan, '/scan', scan_callback, 1)
+    subscriber = node.create_subscription(LaserScan, '/scan', scan_callback, 10)
     
     # Set the publishing rate (adjust as needed)
-    rate = node.create_rate(1)
+    rate = node.create_rate(10)
 
     while rclpy.ok():
         rclpy.spin(node)
@@ -127,5 +127,5 @@ def lidar():
 
 if __name__ == '__main__':
     # Uncomment one of the following functions based on your desired mode
-    # move_robot()  # Manual control using the keyboard
-    lidar()  # Autonomous control using Lidar data
+    move_robot()  # Manual control using the keyboard
+    # lidar()  # Autonomous control using Lidar data
