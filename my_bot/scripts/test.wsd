@@ -1,0 +1,52 @@
+@startuml test
+skinparam monochrome false
+' rectangleTitleFont Arial Bold 16
+
+rectangle "Airline Booking System" as system {
+  rectangle "Browse Flights" {
+    actor User as U
+    U --> (Search Flight)
+    U --> (View Flight Details)
+  }
+  rectangle "Manage Bookings" {
+    U --> (Book Flight)
+    (Book Flight) --> (Direct Booking)
+    (Direct Booking) --> (Select Flight)
+    (Direct Booking) --> (Enter Passenger Details)
+    (Direct Booking) --> (Select Payment Method)
+    (Direct Booking) --> (Make Payment)
+    (Book Flight) --> (Indirect Booking)
+    (Indirect Booking) --> (Contact Agent)
+    U --> (Manage Booking)
+    U --> (View Booking History)
+    U --> (Cancel Booking)
+  }
+  actor "Super Admin" as SA
+  SA --> (Manage Booking)
+  SA --> (Configure System)
+}
+
+database "Database" {
+  Database --> (Select Flight)
+  Database --> (Enter Passenger Details)
+  Database --> (Make Payment)
+  Database --> (Contact Agent)
+  Database --> (Manage Booking)
+  Database --> (Configure System)
+}
+
+U --|> (Search Flight)
+U --|> (View Flight Details)
+U --|> (Book Flight)
+U --|> (Manage Booking)
+U --|> (View Booking History)
+U --|> (Cancel Booking)
+
+SA --|> (Manage Booking)
+SA --|> (Configure System)
+
+' right to left direction
+actor Agent as A
+A --> (Manage Booking)
+
+@enduml
