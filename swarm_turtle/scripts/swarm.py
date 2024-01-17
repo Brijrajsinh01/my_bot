@@ -22,13 +22,25 @@ def swarm():
     def unfold(msg):
         global received_dict
         received_dict = json.loads(msg.data)
-        # print(received_dict)
 
-        
+    def attraction(x1,y1,x2,y2):
+        attraction_force = abs(0.3*(x1-x2))
+        if (-0.66 <= int(x1-x2) <= 0.66):
+            attraction_force = abs(0.01*(y1-y2))
+        return attraction_force
+    def repultion(x1,y1,x2,y2,minimum):
+        if minimum<1.1:
+            repultion_force = -abs(0.6*(x1-x2))
+            if (-0.66 <= int(x1-x2) <= 0.66):
+                repultion_force = -abs(0.0*(y1-y2))
+        else:
+            repultion_force=0
+        return repultion_force
+
+
 
     def callback(msg, turtle_name):
         global theta1,x1,y1 # Use the nonlocal keyword to modify the global variable
-        # dist_sub(msg, turtle_name)
         theta1 = msg.theta
         x1=msg.x
         y1=msg.y
@@ -38,8 +50,7 @@ def swarm():
     def callback1(msg, turtle_name):
         global theta1,received_dict  # Declare theta1 as a global variable
         global theta2,x2,y2  # Declare theta2 as a nonlocal variable
-        # print(msg.theta)
-        # matrix=dist_sub(msg, turtle_name)
+        global x1, y1
         theta2 = msg.theta
         x2=msg.x
         y2=msg.y
@@ -49,7 +60,7 @@ def swarm():
         if X < 0 and (-0.22 <= int(Y) <= 0.22):
             X=abs(X)
             angle_radians = math.atan2(X,Y)
-            # print("exception")
+
             if theta2>0:
                 angle_radians=math.pi
             else:
@@ -57,26 +68,22 @@ def swarm():
             twist_msg.angular.z =6.0*(angle_radians-theta2)
         else:
             angle_radians = math.atan2(Y,X)
-            # print(angle_radians)
             twist_msg.angular.z =(angle_radians-theta2)  # Set the angular velocity
-        # distance=math.dist([x1,y1],[x2,y2])
-        # print(Y)
-        # print(received_dict[turtle_name])
+        attr=attraction(x1,y1,x2,y2)
         minimum=min(received_dict[turtle_name])
-        if minimum>1.1:
-            twist_msg.linear.x = abs(0.3*(x1-x2))
-            if (-0.66 <= int(x1-x2) <= 0.66):
-                twist_msg.linear.x = abs(0.01*(y1-y2))
-        # twist_msg.linear.y = abs(0.3*(y1-y2))
-        # print(twist_msg.angular.z)
-        
+        repl=repultion(x1,y1,x2,y2,minimum)
+        twist_msg.linear.x=attr+repl
+        # if minimum>1.1:
+        #     twist_msg.linear.x = abs(0.3*(x1-x2))
+        #     if (-0.66 <= int(x1-x2) <= 0.66):
+        #         twist_msg.linear.x = abs(0.01*(y1-y2))
+        print(turtle_name)
+        print(twist_msg.linear.x)
+        print("-------------")
         pub1.publish(twist_msg)
 
     def callback2(msg, turtle_name):
-        global theta1  # Declare theta1 as a global variable
-        # global theta2,x2,y2  # Declare theta2 as a nonlocal variable
-        # print(msg.theta)
-        # matrix=dist_sub(msg, turtle_name)
+        global theta1,received_dict  # Declare theta1 as a global variable
         theta2 = msg.theta
         x2=msg.x
         y2=msg.y
@@ -86,7 +93,7 @@ def swarm():
         if X < 0 and (-0.22 <= int(Y) <= 0.22):
             X=abs(X)
             angle_radians = math.atan2(X,Y)
-            # print("exception")
+
             if theta2>0:
                 angle_radians=math.pi
             else:
@@ -94,26 +101,24 @@ def swarm():
             twist_msg.angular.z =6.0*(angle_radians-theta2)
         else:
             angle_radians = math.atan2(Y,X)
-            # print(angle_radians)
             twist_msg.angular.z =(angle_radians-theta2)  # Set the angular velocity
-        # distance=math.dist([x1,y1],[x2,y2])
-        # print(Y)
+        attr=attraction(x1,y1,x2,y2)
         minimum=min(received_dict[turtle_name])
-        if minimum>1.1:
-            twist_msg.linear.x = abs(0.3*(x1-x2))
-            if (-0.66 <= int(x1-x2) <= 0.66):
-                twist_msg.linear.x = abs(0.01*(y1-y2))
-        # twist_msg.linear.y = abs(0.3*(y1-y2))
-        # print(twist_msg.angular.z)
-        
+        repl=repultion(x1,y1,x2,y2,minimum)
+        twist_msg.linear.x=attr+repl
+        # if minimum>1.1:
+        #     twist_msg.linear.x = abs(0.3*(x1-x2))
+        #     if (-0.66 <= int(x1-x2) <= 0.66):
+        #         twist_msg.linear.x = abs(0.01*(y1-y2))
+        print(turtle_name)
+        print(twist_msg.linear.x)
+        print("-------------")
         pub2.publish(twist_msg)
 
 
     def callback3(msg, turtle_name):
-        global theta1  # Declare theta1 as a global variable
+        global theta1,received_dict  # Declare theta1 as a global variable
         global theta2,x2,y2  # Declare theta2 as a nonlocal variable
-        # print(msg.theta)
-        # matrix=dist_sub(msg, turtle_name)
         theta2 = msg.theta
         x2=msg.x
         y2=msg.y
@@ -123,7 +128,7 @@ def swarm():
         if X < 0 and (-0.22 <= int(Y) <= 0.22):
             X=abs(X)
             angle_radians = math.atan2(X,Y)
-            # print("exception")
+
             if theta2>0:
                 angle_radians=math.pi
             else:
@@ -131,25 +136,23 @@ def swarm():
             twist_msg.angular.z =6.0*(angle_radians-theta2)
         else:
             angle_radians = math.atan2(Y,X)
-            # print(angle_radians)
             twist_msg.angular.z =(angle_radians-theta2)  # Set the angular velocity
-        # distance=math.dist([x1,y1],[x2,y2])
-        # print(Y)
+        attr=attraction(x1,y1,x2,y2)
         minimum=min(received_dict[turtle_name])
-        if minimum>1.1:
-            twist_msg.linear.x = abs(0.3*(x1-x2))
-            if (-0.66 <= int(x1-x2) <= 0.66):
-                twist_msg.linear.x = abs(0.01*(y1-y2))
-        # twist_msg.linear.y = abs(0.3*(y1-y2))
-        # print(twist_msg.angular.z)
-        
+        repl=repultion(x1,y1,x2,y2,minimum)
+        twist_msg.linear.x=attr+repl
+        # if minimum>1.1:
+        #     twist_msg.linear.x = abs(0.3*(x1-x2))
+        #     if (-0.66 <= int(x1-x2) <= 0.66):
+        #         twist_msg.linear.x = abs(0.01*(y1-y2))
+        print(turtle_name)
+        print(twist_msg.linear.x)
+        print("-------------")
         pub3.publish(twist_msg)
 
     def callback4(msg, turtle_name):
-        global theta1  # Declare theta1 as a global variable
+        global theta1,received_dict  # Declare theta1 as a global variable
         global theta2,x2,y2  # Declare theta2 as a nonlocal variable
-        # print(msg.theta)
-        # matrix=dist_sub(msg, turtle_name)
         theta2 = msg.theta
         x2=msg.x
         y2=msg.y
@@ -159,7 +162,7 @@ def swarm():
         if X < 0 and (-0.22 <= int(Y) <= 0.22):
             X=abs(X)
             angle_radians = math.atan2(X,Y)
-            # print("exception")
+
             if theta2>0:
                 angle_radians=math.pi
             else:
@@ -167,25 +170,24 @@ def swarm():
             twist_msg.angular.z =6.0*(angle_radians-theta2)
         else:
             angle_radians = math.atan2(Y,X)
-            # print(angle_radians)
             twist_msg.angular.z =(angle_radians-theta2)  # Set the angular velocity
-        # distance=math.dist([x1,y1],[x2,y2])
-        # print(Y)
+
+        attr=attraction(x1,y1,x2,y2)
         minimum=min(received_dict[turtle_name])
-        if minimum>1.1:
-            twist_msg.linear.x = abs(0.3*(x1-x2))
-            if (-0.66 <= int(x1-x2) <= 0.66):
-                twist_msg.linear.x = abs(0.01*(y1-y2))
-        # twist_msg.linear.y = abs(0.3*(y1-y2))
-        # print(twist_msg.angular.z)
-        
+        repl=repultion(x1,y1,x2,y2,minimum)
+        twist_msg.linear.x=attr+repl
+        # if minimum>1.1:
+        #     twist_msg.linear.x = abs(0.3*(x1-x2))
+        #     if (-0.66 <= int(x1-x2) <= 0.66):
+        #         twist_msg.linear.x = abs(0.01*(y1-y2))
+        print(turtle_name)
+        print(twist_msg.linear.x)
+        print("-------------")
         pub4.publish(twist_msg)
     
     def callback5(msg, turtle_name):
-        global theta1  # Declare theta1 as a global variable
+        global theta1,received_dict  # Declare theta1 as a global variable
         global theta2,x2,y2  # Declare theta2 as a nonlocal variable
-        # print(msg.theta)
-        # matrix=dist_sub(msg, turtle_name)
         theta2 = msg.theta
         x2=msg.x
         y2=msg.y
@@ -195,7 +197,7 @@ def swarm():
         if X < 0 and (-0.22 <= int(Y) <= 0.22):
             X=abs(X)
             angle_radians = math.atan2(X,Y)
-            # print("exception")
+
             if theta2>0:
                 angle_radians=math.pi
             else:
@@ -205,16 +207,17 @@ def swarm():
             angle_radians = math.atan2(Y,X)
             # print(angle_radians)
             twist_msg.angular.z =(angle_radians-theta2)  # Set the angular velocity
-        # distance=math.dist([x1,y1],[x2,y2])
-        # print(Y)
+        attr=attraction(x1,y1,x2,y2)
         minimum=min(received_dict[turtle_name])
-        if minimum>1.1:
-            twist_msg.linear.x = abs(0.3*(x1-x2))
-            if (-0.66 <= int(x1-x2) <= 0.66):
-                twist_msg.linear.x = abs(0.01*(y1-y2))
-        # twist_msg.linear.y = abs(0.3*(y1-y2))
-        # print(twist_msg.angular.z)
-        
+        repl=repultion(x1,y1,x2,y2,minimum)
+        twist_msg.linear.x=attr+repl
+        # if minimum>1.1:
+        #     twist_msg.linear.x = abs(0.3*(x1-x2))
+        #     if (-0.66 <= int(x1-x2) <= 0.66):
+        #         twist_msg.linear.x = abs(0.01*(y1-y2))
+        print(turtle_name)
+        print(twist_msg.linear.x)
+        print("-------------")
         pub5.publish(twist_msg)
 
     node.create_subscription(
