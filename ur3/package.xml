@@ -14,5 +14,9 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <ros2_package type="rviz2_plugin" />
+  <rviz2>
+    <resource_path>/home/dell/ros2_ws/src/ur3/ur_description/meshes</resource_path>
+  </rviz2>
   </export>
 </package>
