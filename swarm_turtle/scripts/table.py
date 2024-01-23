@@ -9,6 +9,7 @@ def brain():
     rclpy.init()
     node = rclpy.create_node('lookup_table')
     dictionary_publisher = node.create_publisher(String, 'distances', 10)
+    dictionary_pos_publisher = node.create_publisher(String, 'position', 10)
     dist={}
     
     def dist_sub(msg, turtle_name):
@@ -18,7 +19,7 @@ def brain():
             dist[turtle_name]=[msg.x,msg.y]
         else:
             dist.update({turtle_name:[msg.x,msg.y]})
-        # print(dist)
+        print(dist)
         dist_matrix(dist)
         # return(dist)
 
@@ -42,6 +43,10 @@ def brain():
         msg = String()
         msg.data = json_string
         dictionary_publisher.publish(msg)
+        json_pos_string = json.dumps(dist)
+        msg_pos = String()
+        msg_pos.data = json_pos_string
+        dictionary_pos_publisher.publish(msg_pos)
         return dist_mat
     
     node.create_subscription(
