@@ -1,0 +1,7 @@
+@startuml test
+
+rectangle Lol
+lol -- (hello)
+lol -- (hello1)
+
+@enduml
