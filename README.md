@@ -30,3 +30,9 @@ To launch the simulation environment, run the following command:
 
 ```bash
 ros2 launch my_bot launch_sim.launch.py
+```
+### Moving Bot
+After launching the simulation, you can control the robot using the ros2 teleop twist keyboard package. Use the following command to control the robot's movement:
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
