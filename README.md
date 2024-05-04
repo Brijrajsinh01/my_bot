@@ -23,3 +23,10 @@ Once you have ROS 2 installed, you can clone the My_Bot repository into your ROS
 ```bash
 cd ~/ros2_ws/src
 git clone https://github.com/Brijrajsinh01/my_bot.git
+```
+### Launching Simulation
+
+To launch the simulation environment, run the following command:
+
+```bash
+ros2 launch my_bot launch_sim.launch.py
