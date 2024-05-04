@@ -33,4 +33,4 @@ After launching the simulation, you can control the robot using the ros2 teleop 
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-Yooyoo your bot is moving now
+Yooyoo your bot is moving and mapping now
