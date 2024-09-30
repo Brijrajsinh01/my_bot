@@ -3,8 +3,8 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, Point
+from orient_bot import OrientBot  # Make sure orient_bot.py exists and is correct
 import time
-from orient_bot import OrientBot  # Import the orientation functionality from orient_bot
 
 class Navigation(Node):
 
@@ -24,6 +24,7 @@ class Navigation(Node):
 
         # Variable to store the farthest obstacle coordinates
         self.farthest_obstacle = None
+        self.oriented = False  # Flag to check if orientation is done
 
         # Define a Twist message for movement
         self.move_cmd = Twist()
@@ -42,7 +43,7 @@ class Navigation(Node):
     def rotate(self, duration):
         # Rotate the robot
         start_time = self.get_clock().now().seconds_nanoseconds()[0]
-        self.move_cmd.angular.z = 0.5
+        self.move_cmd.angular.z = -0.5
         while self.get_clock().now().seconds_nanoseconds()[0] - start_time < duration:
             self.publisher_.publish(self.move_cmd)
             self.get_logger().info("Rotating...")
@@ -53,6 +54,20 @@ class Navigation(Node):
         self.publisher_.publish(self.move_cmd)
         self.get_logger().info("Rotation complete!")
 
+    def move(self, duration):
+        # Move the robot forward
+        start_time = self.get_clock().now().seconds_nanoseconds()[0]
+        self.move_cmd.linear.x = 0.5
+        while self.get_clock().now().seconds_nanoseconds()[0] - start_time < duration:
+            self.publisher_.publish(self.move_cmd)
+            self.get_logger().info("Moving forward...")
+            time.sleep(0.1)
+
+        # Stop the robot
+        self.move_cmd.linear.x = 0.0
+        self.publisher_.publish(self.move_cmd)
+        self.get_logger().info("Movement complete!")
+
     def orient_towards_obstacle(self):
         # Check if the farthest obstacle is available
         if self.farthest_obstacle:
@@ -60,7 +75,10 @@ class Navigation(Node):
             self.get_logger().info(f'Oriented towards obstacle at: (x: {target_x}, y: {target_y})')
 
             # Use the OrientBot to orient the robot towards the obstacle
-            self.orient_bot.orient_towards(target_x, target_y)
+            result = self.orient_bot.orient_towards(target_x, target_y)
+            
+            # Once orientation is complete, set flag
+            self.oriented = True
         else:
             self.get_logger().info('No farthest obstacle available for orientation.')
 
@@ -70,11 +88,15 @@ def main(args=None):
     navigation = Navigation()
 
     try:
-        # Step 1: Perform rotation
-        navigation.rotate(3)  # Rotate for 3 seconds
+        navigation.rotate(3)
 
-        # Step 2: Wait for farthest obstacle and orient towards it
-        rclpy.spin(navigation)
+        # Use rclpy.spin_once() in a loop to control the flow
+        while rclpy.ok() and not navigation.oriented:
+            rclpy.spin_once(navigation, timeout_sec=0.1)
+
+        # Once oriented, move the robot forward
+        if navigation.oriented:
+            navigation.move(5)
 
     except KeyboardInterrupt:
         pass

@@ -48,18 +48,22 @@ class OrientBot(Node):
         rotate_cmd = Twist()
 
         while abs(yaw_diff) > 0.05:  # Keep rotating until yaw difference is sufficiently small
-            rotate_cmd.linear.x = 0.2 if yaw_diff > 0 else -0.2
+            rotate_cmd.angular.z = 0.2 if yaw_diff > 0 else -0.2
             self.cmd_vel_pub.publish(rotate_cmd)
             self.get_logger().info(f'Rotating towards target... Current yaw: {self.robot_yaw:.2f}, Target yaw: {target_yaw:.2f}')
+
+            # Allow ROS to process callbacks so that odom_callback can update the robot's yaw
+            rclpy.spin_once(self)
 
             # Recalculate yaw difference as the robot rotates
             yaw_diff = target_yaw - self.robot_yaw
             yaw_diff = atan2(sin(yaw_diff), cos(yaw_diff))
 
         # Stop rotation when the bot is facing the target
-        rotate_cmd.linear.x = 0.0
+        rotate_cmd.angular.z = 0.0
         self.cmd_vel_pub.publish(rotate_cmd)
         self.get_logger().info("Oriented towards the target!")
+        return(0)
 
 def main(args=None):
     rclpy.init(args=args)
