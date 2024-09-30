@@ -67,11 +67,20 @@ def generate_launch_description():
         }.items()
     )
 
+    obstacle_detector_node = Node(
+        package=package_name,
+        executable='obstacle_detector.py',  # Ensure the executable name is correct
+        name='obstacle_detector',
+        output='screen',
+        emulate_tty=True  # Ensures logs are printed properly in console
+    )
+
     # Return the complete LaunchDescription
     return LaunchDescription([
         rsp,
         gazebo,
         spawn_entity,
         rviz_node,
-        nav2_bringup
+        nav2_bringup,
+        obstacle_detector_node
     ])

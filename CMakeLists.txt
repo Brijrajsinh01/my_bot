@@ -39,7 +39,7 @@ install(
 install(
   PROGRAMS
   scripts/navigation.py
-  scripts/obstacle_detct.py
+  scripts/obstacle_detector.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
