@@ -95,8 +95,8 @@ def main(args=None):
             rclpy.spin_once(navigation, timeout_sec=0.1)
 
         # Once oriented, move the robot forward
-        if navigation.oriented:
-            navigation.move(5)
+        # if navigation.oriented:
+        #     navigation.move(5)
 
     except KeyboardInterrupt:
         pass
