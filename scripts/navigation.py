@@ -1,108 +1,124 @@
 #!/usr/bin/env python3
 
 import rclpy
-from rclpy.node import Node
-from geometry_msgs.msg import Twist, Point
+from geometry_msgs.msg import Twist, Point, PoseStamped
 from orient_bot import OrientBot  # Make sure orient_bot.py exists and is correct
 import time
+import math
 
-class Navigation(Node):
+# Global variables to store robot's position and the farthest obstacle
+robot_x = 0.0
+robot_y = 0.0
+farthest_obstacle = None
+oriented = False
 
-    def __init__(self):
-        super().__init__('navigation_node')
+# Publisher for /cmd_vel
+cmd_vel_publisher = None
 
-        # Create a publisher for the cmd_vel topic
-        self.publisher_ = self.create_publisher(Twist, '/cmd_vel', 10)
+def position_callback(msg):
+    """Callback for receiving robot's position from /base_link_coordinates."""
+    global robot_x, robot_y
+    robot_x = msg.pose.position.x
+    robot_y = msg.pose.position.y
 
-        # Subscribe to the /farthest_obstacle topic to get the coordinates
-        self.obstacle_subscription = self.create_subscription(
-            Point,
-            '/farthest_obstacle',
-            self.obstacle_callback,
-            10
-        )
+def obstacle_callback(msg):
+    """Callback for receiving farthest obstacle coordinates."""
+    global farthest_obstacle
+    farthest_obstacle = (msg.x, msg.y)
+    print(f'Farthest obstacle received: (x: {msg.x}, y: {msg.y})')
 
-        # Variable to store the farthest obstacle coordinates
-        self.farthest_obstacle = None
-        self.oriented = False  # Flag to check if orientation is done
+def orient_towards_obstacle(orient_bot):
+    """Orients the robot towards the farthest obstacle using the OrientBot."""
+    global farthest_obstacle, oriented
+    if farthest_obstacle:
+        target_x, target_y = farthest_obstacle
+        print(f'Oriented towards obstacle at: (x: {target_x}, y: {target_y})')
 
-        # Define a Twist message for movement
-        self.move_cmd = Twist()
+        # Use OrientBot to orient towards the obstacle
+        orient_bot.orient_towards(target_x, target_y)
+        oriented = True
+    else:
+        print('No farthest obstacle available for orientation.')
+        oriented = False
 
-        # Create an instance of OrientBot for handling orientation
-        self.orient_bot = OrientBot()
+def move(target_distance):
+    """Moves the robot forward by a specific target distance."""
+    global robot_x, robot_y
 
-    def obstacle_callback(self, msg):
-        # Update the farthest obstacle coordinates when received
-        self.farthest_obstacle = (msg.x, msg.y)
-        self.get_logger().info(f'Farthest obstacle received: (x: {msg.x}, y: {msg.y})')
+    # Get the initial position of the robot
+    initial_x = robot_x
+    initial_y = robot_y
 
-        # Orient the bot towards the farthest obstacle once the coordinates are received
-        self.orient_towards_obstacle()
+    # Continuously calculate the distance traveled
+    traveled_distance = 0.0
 
-    def rotate(self, duration):
-        # Rotate the robot
-        start_time = self.get_clock().now().seconds_nanoseconds()[0]
-        self.move_cmd.angular.z = -0.5
-        while self.get_clock().now().seconds_nanoseconds()[0] - start_time < duration:
-            self.publisher_.publish(self.move_cmd)
-            self.get_logger().info("Rotating...")
-            time.sleep(0.1)
+    while traveled_distance < target_distance:
+        # Use spin_once to update the robot's position
+        rclpy.spin_once(node, timeout_sec=0.1)
 
-        # Stop the robot
-        self.move_cmd.angular.z = 0.0
-        self.publisher_.publish(self.move_cmd)
-        self.get_logger().info("Rotation complete!")
+        # Calculate the distance traveled using Euclidean distance
+        traveled_distance = math.sqrt((robot_x - initial_x) ** 2 + (robot_y - initial_y) ** 2)
+        print(f"Traveled distance: {traveled_distance:.2f} meters")
 
-    def move(self, duration):
-        # Move the robot forward
-        start_time = self.get_clock().now().seconds_nanoseconds()[0]
-        self.move_cmd.linear.x = 0.5
-        while self.get_clock().now().seconds_nanoseconds()[0] - start_time < duration:
-            self.publisher_.publish(self.move_cmd)
-            self.get_logger().info("Moving forward...")
-            time.sleep(0.1)
+        # Start moving the robot
+        move_cmd = Twist()
+        move_cmd.linear.x = 0.2  # Set forward linear speed
+        cmd_vel_publisher.publish(move_cmd)
 
-        # Stop the robot
-        self.move_cmd.linear.x = 0.0
-        self.publisher_.publish(self.move_cmd)
-        self.get_logger().info("Movement complete!")
+        time.sleep(0.1)  # Sleep to avoid spamming the loop
 
-    def orient_towards_obstacle(self):
-        # Check if the farthest obstacle is available
-        if self.farthest_obstacle:
-            target_x, target_y = self.farthest_obstacle
-            self.get_logger().info(f'Oriented towards obstacle at: (x: {target_x}, y: {target_y})')
+    # Stop the robot once the distance is covered
+    move_cmd.linear.x = 0.0
+    cmd_vel_publisher.publish(move_cmd)
+    print(f"Target distance of {target_distance} meters reached!")
 
-            # Use the OrientBot to orient the robot towards the obstacle
-            result = self.orient_bot.orient_towards(target_x, target_y)
-            
-            # Once orientation is complete, set flag
-            self.oriented = True
-        else:
-            self.get_logger().info('No farthest obstacle available for orientation.')
-
+def distance_to_obstacle():
+    """Calculates the distance between the robot and the farthest obstacle."""
+    global farthest_obstacle, robot_x, robot_y
+    if farthest_obstacle:
+        obstacle_x, obstacle_y = farthest_obstacle
+        distance = math.sqrt((obstacle_x - robot_x) ** 2 + (obstacle_y - robot_y) ** 2)
+        print(f"Distance to farthest obstacle: {distance:.2f} meters")
+        return distance
+    else:
+        print("No farthest obstacle to calculate distance.")
+        return None
 
 def main(args=None):
+    global cmd_vel_publisher, node
+
     rclpy.init(args=args)
-    navigation = Navigation()
+    node = rclpy.create_node('navigation_node')
+
+    # Publisher for /cmd_vel
+    cmd_vel_publisher = node.create_publisher(Twist, '/cmd_vel', 10)
+
+    # Subscribers for /farthest_obstacle and /base_link_coordinates
+    node.create_subscription(Point, '/farthest_obstacle', obstacle_callback, 10)
+    node.create_subscription(PoseStamped, '/base_link_coordinates', position_callback, 10)
+
+    # Create an instance of OrientBot for handling orientation
+    orient_bot = OrientBot()
 
     try:
-        navigation.rotate(3)
+        # Wait for the farthest obstacle data
+        while rclpy.ok() and farthest_obstacle is None:
+            rclpy.spin_once(node, timeout_sec=0.1)
 
-        # Use rclpy.spin_once() in a loop to control the flow
-        while rclpy.ok() and not navigation.oriented:
-            rclpy.spin_once(navigation, timeout_sec=0.1)
+        # Orient the robot towards the farthest obstacle
+        orient_towards_obstacle(orient_bot)
 
-        # Once oriented, move the robot forward
-        # if navigation.oriented:
-        #     navigation.move(5)
+        # Once oriented, move towards the obstacle
+        if oriented:
+            distance_left = distance_to_obstacle() - 0.9  # Example, subtracting a margin
+            print(f"Distance left to the obstacle: {distance_left:.2f} meters")
+            move(distance_left)
 
     except KeyboardInterrupt:
         pass
 
     # Shutdown
-    navigation.destroy_node()
+    node.destroy_node()
     rclpy.shutdown()
 
 

@@ -40,6 +40,7 @@ install(
   PROGRAMS
   scripts/navigation.py
   scripts/obstacle_detector.py
+  scripts/tf_test.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

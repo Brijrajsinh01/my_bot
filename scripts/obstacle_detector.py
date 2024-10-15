@@ -3,7 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, PoseStamped
 from visualization_msgs.msg import Marker
 import numpy as np
 import math
@@ -16,6 +16,8 @@ class SimpleObstacleDetector(Node):
         # Initialize the robot position and farthest obstacle coordinates
         self.farthest_obstacle = None
         self.max_distance = float('-inf')
+        self.robot_x = 0.0  # Default robot position
+        self.robot_y = 0.0
 
         # Subscribe to the /map topic to receive the occupancy grid
         self.map_subscription = self.create_subscription(
@@ -30,6 +32,20 @@ class SimpleObstacleDetector(Node):
 
         # Create a publisher to publish the farthest obstacle coordinates
         self.farthest_obstacle_publisher = self.create_publisher(Point, '/farthest_obstacle', 10)
+
+        # Subscriber to get the robot's position from the base_link_coordinates topic (PoseStamped instead of PointStamped)
+        self.position_subscription = self.create_subscription(
+            PoseStamped,
+            '/base_link_coordinates',
+            self.position_callback,
+            10
+        )
+
+    def position_callback(self, msg):
+        # Update robot's position based on the received message from base_link_coordinates topic
+        self.robot_x = msg.pose.position.x  # Extracting x from pose
+        self.robot_y = msg.pose.position.y  # Extracting y from pose
+        # self.get_logger().info(f'Received robot coordinates: (x: {self.robot_x}, y: {self.robot_y})')
 
     def map_callback(self, msg):
         # Get map metadata
@@ -46,7 +62,7 @@ class SimpleObstacleDetector(Node):
         obstacle_positions = []
 
         if len(obstacles[0]) > 0:
-            self.get_logger().info(f'Obstacles detected at: {len(obstacles[0])} points')
+            # self.get_logger().info(f'Obstacles detected at: {len(obstacles[0])} points')
 
             # Store obstacle positions in the map frame
             for i in range(len(obstacles[0])):
@@ -60,14 +76,13 @@ class SimpleObstacleDetector(Node):
             self.get_logger().info('No obstacles detected.')
 
     def find_farthest_obstacle(self, obstacle_positions):
-        # Assume robot is at the origin (0, 0)
-        robot_x, robot_y = 0.0, 0.0
+        # Use the robot's current position from the subscriber
         max_distance = float('-inf')
         farthest_obstacle = None
 
         # Calculate the distance to each obstacle
         for obstacle_x, obstacle_y in obstacle_positions:
-            distance = math.sqrt((obstacle_x - robot_x) ** 2 + (obstacle_y - robot_y) ** 2)
+            distance = math.sqrt((obstacle_x - self.robot_x) ** 2 + (obstacle_y - self.robot_y) ** 2)
             if distance > max_distance:
                 max_distance = distance
                 farthest_obstacle = (obstacle_x, obstacle_y)
@@ -75,7 +90,7 @@ class SimpleObstacleDetector(Node):
         # Update and log the farthest obstacle
         self.farthest_obstacle = farthest_obstacle
         self.max_distance = max_distance
-        self.get_logger().info(f'Farthest obstacle at (x: {farthest_obstacle[0]}, y: {farthest_obstacle[1]}), Distance: {max_distance} meters')
+        # self.get_logger().info(f'Farthest obstacle at (x: {farthest_obstacle[0]}, y: {farthest_obstacle[1]}), Distance: {max_distance} meters')
 
         # Publish the marker to visualize the farthest obstacle in RViz
         self.publish_marker(farthest_obstacle)

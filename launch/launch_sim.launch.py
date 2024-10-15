@@ -75,6 +75,15 @@ def generate_launch_description():
         emulate_tty=True  # Ensures logs are printed properly in console
     )
 
+    base_link_coordinates_node = Node(
+        package=package_name,
+        executable='tf_test.py',  # Ensure the executable name is correct
+        name='base_coordinates',
+        output='screen',
+        emulate_tty=True  # Ensures logs are printed properly in console
+    )
+
+
     # Return the complete LaunchDescription
     return LaunchDescription([
         rsp,
@@ -82,5 +91,6 @@ def generate_launch_description():
         spawn_entity,
         rviz_node,
         nav2_bringup,
-        obstacle_detector_node
+        obstacle_detector_node,
+        base_link_coordinates_node
     ])

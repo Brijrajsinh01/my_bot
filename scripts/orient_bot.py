@@ -2,33 +2,41 @@
 
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist, PoseStamped
 from math import atan2, sin, cos
 
 class OrientBot(Node):
     def __init__(self):
         super().__init__('orient_bot')
-        
+
         # Publisher for the /cmd_vel topic
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-
-        # Subscriber to the /odom topic to get the robot's current position and orientation
-        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
 
         # Initialize robot position and orientation
         self.robot_x = 0.0
         self.robot_y = 0.0
         self.robot_yaw = 0.0
 
-    def odom_callback(self, msg):
-        # Extract robot's current position
-        self.robot_x = msg.pose.pose.position.x
-        self.robot_y = msg.pose.pose.position.y
+        # Subscriber to get the robot's position and orientation from the /base_link_coordinates topic (PoseStamped)
+        self.position_sub = self.create_subscription(
+            PoseStamped,
+            '/base_link_coordinates',
+            self.position_callback,
+            10
+        )
 
-        # Extract the robot's orientation (in yaw)
-        orientation_q = msg.pose.pose.orientation
+    def position_callback(self, msg):
+        """Callback to update robot's position and orientation from base_link_coordinates topic"""
+        # Extract position
+        self.robot_x = msg.pose.position.x
+        self.robot_y = msg.pose.position.y
+        
+        # Extract orientation (quaternion) and convert it to yaw
+        orientation_q = msg.pose.orientation
         self.robot_yaw = self.quaternion_to_euler(orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w)
+
+        print(f"Received position: x={self.robot_x}, y={self.robot_y}, yaw={self.robot_yaw}")
+        self.get_logger().info(f"Position updated: x={self.robot_x}, y={self.robot_y}, yaw={self.robot_yaw}")
 
     def quaternion_to_euler(self, x, y, z, w):
         """Converts quaternion to Euler yaw (rotation about Z-axis)"""
@@ -37,8 +45,11 @@ class OrientBot(Node):
         return atan2(t3, t4)
 
     def orient_towards(self, target_x, target_y):
+        """Function to rotate the robot towards the target"""
+        rclpy.spin_once(self)
         # Calculate the desired yaw angle to face the target coordinates
         target_yaw = atan2(target_y - self.robot_y, target_x - self.robot_x)
+        print(self.robot_x,self.robot_y)
         yaw_diff = target_yaw - self.robot_yaw
 
         # Normalize the yaw difference to be within [-pi, pi]
@@ -50,9 +61,9 @@ class OrientBot(Node):
         while abs(yaw_diff) > 0.05:  # Keep rotating until yaw difference is sufficiently small
             rotate_cmd.angular.z = 0.2 if yaw_diff > 0 else -0.2
             self.cmd_vel_pub.publish(rotate_cmd)
-            # self.get_logger().info(f'Rotating towards target... Current yaw: {self.robot_yaw:.2f}, Target yaw: {target_yaw:.2f}')
+            print(f"Rotating... yaw_diff: {yaw_diff:.2f}")
 
-            # Allow ROS to process callbacks so that odom_callback can update the robot's yaw
+            # Allow ROS to process callbacks so that position_callback can update the values
             rclpy.spin_once(self)
 
             # Recalculate yaw difference as the robot rotates
@@ -63,7 +74,7 @@ class OrientBot(Node):
         rotate_cmd.angular.z = 0.0
         self.cmd_vel_pub.publish(rotate_cmd)
         self.get_logger().info("Oriented towards the target!")
-        return(0)
+        return 0
 
 def main(args=None):
     rclpy.init(args=args)
