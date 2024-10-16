@@ -11,6 +11,7 @@ robot_x = 0.0
 robot_y = 0.0
 farthest_obstacle = None
 oriented = False
+decrement= 0.9
 
 # Publisher for /cmd_vel
 cmd_vel_publisher = None
@@ -84,8 +85,25 @@ def distance_to_obstacle():
         print("No farthest obstacle to calculate distance.")
         return None
 
+def rotate(rotation_duration, speed=1.0):
+    """Rotates the robot clockwise for a specific duration."""
+    rotate_cmd = Twist()
+    rotate_cmd.angular.z = -abs(speed)  # Set negative angular velocity for clockwise rotation
+
+    start_time = time.time()
+
+    while (time.time() - start_time) < rotation_duration:
+        cmd_vel_publisher.publish(rotate_cmd)
+        print(f"Rotating clockwise for {rotation_duration:.2f} seconds...")
+        time.sleep(0.1)
+
+    # Stop the rotation
+    rotate_cmd.angular.z = 0.0
+    cmd_vel_publisher.publish(rotate_cmd)
+    print("Rotation complete!")
+
 def main(args=None):
-    global cmd_vel_publisher, node
+    global cmd_vel_publisher, node, farthest_obstacle, oriented, decrement # Declare global variables
 
     rclpy.init(args=args)
     node = rclpy.create_node('navigation_node')
@@ -101,18 +119,29 @@ def main(args=None):
     orient_bot = OrientBot()
 
     try:
-        # Wait for the farthest obstacle data
-        while rclpy.ok() and farthest_obstacle is None:
-            rclpy.spin_once(node, timeout_sec=0.1)
+        while rclpy.ok():
+            # Wait for the farthest obstacle data
+            while farthest_obstacle is None:
+                print("Waiting for farthest obstacle data...")
+                rclpy.spin_once(node, timeout_sec=0.1)
 
-        # Orient the robot towards the farthest obstacle
-        orient_towards_obstacle(orient_bot)
+            # Rotate the robot for a fixed duration (example: 2 seconds)
+            rotate(2.0)
 
-        # Once oriented, move towards the obstacle
-        if oriented:
-            distance_left = distance_to_obstacle() - 0.9  # Example, subtracting a margin
-            print(f"Distance left to the obstacle: {distance_left:.2f} meters")
-            move(distance_left)
+            # Orient the robot towards the farthest obstacle
+            orient_towards_obstacle(orient_bot)
+
+            # Once oriented, move towards the obstacle
+            if oriented:
+                distance_left = distance_to_obstacle() - decrement  # Example, subtracting a margin
+                print(f"Distance left to the obstacle: {distance_left:.2f} meters")
+                move(distance_left)
+                decrement=decrement+0.2
+
+            # Reset for next cycle
+            farthest_obstacle = None
+            oriented = False
+            print("Starting new cycle...\n")
 
     except KeyboardInterrupt:
         pass

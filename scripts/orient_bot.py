@@ -59,7 +59,7 @@ class OrientBot(Node):
         rotate_cmd = Twist()
 
         while abs(yaw_diff) > 0.05:  # Keep rotating until yaw difference is sufficiently small
-            rotate_cmd.angular.z = 0.2 if yaw_diff > 0 else -0.2
+            rotate_cmd.angular.z = 0.5 if yaw_diff > 0 else -0.2
             self.cmd_vel_pub.publish(rotate_cmd)
             print(f"Rotating... yaw_diff: {yaw_diff:.2f}")
 
