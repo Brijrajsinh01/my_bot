@@ -35,8 +35,8 @@ class OrientBot(Node):
         orientation_q = msg.pose.orientation
         self.robot_yaw = self.quaternion_to_euler(orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w)
 
-        print(f"Received position: x={self.robot_x}, y={self.robot_y}, yaw={self.robot_yaw}")
-        self.get_logger().info(f"Position updated: x={self.robot_x}, y={self.robot_y}, yaw={self.robot_yaw}")
+        # print(f"Received position: x={self.robot_x}, y={self.robot_y}, yaw={self.robot_yaw}")
+        # self.get_logger().info(f"Position updated: x={self.robot_x}, y={self.robot_y}, yaw={self.robot_yaw}")
 
     def quaternion_to_euler(self, x, y, z, w):
         """Converts quaternion to Euler yaw (rotation about Z-axis)"""
@@ -49,7 +49,7 @@ class OrientBot(Node):
         rclpy.spin_once(self)
         # Calculate the desired yaw angle to face the target coordinates
         target_yaw = atan2(target_y - self.robot_y, target_x - self.robot_x)
-        print(self.robot_x,self.robot_y)
+        # print(self.robot_x,self.robot_y)
         yaw_diff = target_yaw - self.robot_yaw
 
         # Normalize the yaw difference to be within [-pi, pi]
@@ -61,7 +61,7 @@ class OrientBot(Node):
         while abs(yaw_diff) > 0.05:  # Keep rotating until yaw difference is sufficiently small
             rotate_cmd.angular.z = 0.5 if yaw_diff > 0 else -0.2
             self.cmd_vel_pub.publish(rotate_cmd)
-            print(f"Rotating... yaw_diff: {yaw_diff:.2f}")
+            # print(f"Rotating... yaw_diff: {yaw_diff:.2f}")
 
             # Allow ROS to process callbacks so that position_callback can update the values
             rclpy.spin_once(self)

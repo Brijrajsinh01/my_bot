@@ -11,7 +11,7 @@ robot_x = 0.0
 robot_y = 0.0
 farthest_obstacle = None
 oriented = False
-decrement= 0.9
+decrement= 0.0
 
 # Publisher for /cmd_vel
 cmd_vel_publisher = None
@@ -85,10 +85,10 @@ def distance_to_obstacle():
         print("No farthest obstacle to calculate distance.")
         return None
 
-def rotate(rotation_duration, speed=1.0):
+def rotate(rotation_duration, speed=0.5):
     """Rotates the robot clockwise for a specific duration."""
     rotate_cmd = Twist()
-    rotate_cmd.angular.z = -abs(speed)  # Set negative angular velocity for clockwise rotation
+    rotate_cmd.angular.z = abs(speed)  # Set negative angular velocity for clockwise rotation
 
     start_time = time.time()
 
@@ -115,10 +115,12 @@ def main(args=None):
     node.create_subscription(Point, '/farthest_obstacle', obstacle_callback, 10)
     node.create_subscription(PoseStamped, '/base_link_coordinates', position_callback, 10)
 
+    rotate((math.pi)*8)
     # Create an instance of OrientBot for handling orientation
     orient_bot = OrientBot()
 
     try:
+        print("trying")
         while rclpy.ok():
             # Wait for the farthest obstacle data
             while farthest_obstacle is None:
@@ -136,7 +138,7 @@ def main(args=None):
                 distance_left = distance_to_obstacle() - decrement  # Example, subtracting a margin
                 print(f"Distance left to the obstacle: {distance_left:.2f} meters")
                 move(distance_left)
-                decrement=decrement+0.2
+                decrement=decrement+0.0
 
             # Reset for next cycle
             farthest_obstacle = None

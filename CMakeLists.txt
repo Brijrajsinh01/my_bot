@@ -41,6 +41,11 @@ install(
   scripts/navigation.py
   scripts/obstacle_detector.py
   scripts/tf_test.py
+  scripts/nav2.py
+  scripts/map.py
+  scripts/exploration_goal_publisher.py
+  scripts/nav2_copy.py
+  scripts/contour_frontier_explorer.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

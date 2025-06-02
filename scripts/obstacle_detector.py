@@ -93,7 +93,7 @@ class SimpleObstacleDetector(Node):
         # self.get_logger().info(f'Farthest obstacle at (x: {farthest_obstacle[0]}, y: {farthest_obstacle[1]}), Distance: {max_distance} meters')
 
         # Publish the marker to visualize the farthest obstacle in RViz
-        self.publish_marker(farthest_obstacle)
+        # self.publish_marker(farthest_obstacle)
 
         # Publish the coordinates of the farthest obstacle as a Point message
         point_msg = Point()
