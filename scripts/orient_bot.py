@@ -3,12 +3,14 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, PoseStamped
+from std_msgs.msg import String  # For controlling orientation commands
 from math import atan2, sin, cos
+import time
+import json
 
 class OrientBot(Node):
     def __init__(self):
         super().__init__('orient_bot')
-
         # Publisher for the /cmd_vel topic
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
@@ -16,12 +18,23 @@ class OrientBot(Node):
         self.robot_x = 0.0
         self.robot_y = 0.0
         self.robot_yaw = 0.0
+        self.target_x = None
+        self.target_y = None
+        self.is_orienting = False  # Flag to check if orientation should run
 
         # Subscriber to get the robot's position and orientation from the /base_link_coordinates topic (PoseStamped)
         self.position_sub = self.create_subscription(
             PoseStamped,
             '/base_link_coordinates',
             self.position_callback,
+            10
+        )
+
+        # Subscriber to receive control commands for orienting
+        self.command_sub = self.create_subscription(
+            String,
+            '/orient_command',
+            self.command_callback,
             10
         )
 
@@ -55,8 +68,8 @@ class OrientBot(Node):
         # Normalize the yaw difference to be within [-pi, pi]
         yaw_diff = atan2(sin(yaw_diff), cos(yaw_diff))
 
-        # Rotate the bot until it is facing the target
-        rotate_cmd = Twist()
+            # Normalize the yaw difference to be within [-pi, pi]
+        yaw_diff = atan2(sin(yaw_diff), cos(yaw_diff))
 
         while abs(yaw_diff) > 0.05:  # Keep rotating until yaw difference is sufficiently small
             rotate_cmd.angular.z = 0.5 if yaw_diff > 0 else -0.2
@@ -66,29 +79,27 @@ class OrientBot(Node):
             # Allow ROS to process callbacks so that position_callback can update the values
             rclpy.spin_once(self)
 
-            # Recalculate yaw difference as the robot rotates
-            yaw_diff = target_yaw - self.robot_yaw
-            yaw_diff = atan2(sin(yaw_diff), cos(yaw_diff))
+            # Sleep to allow time for position update
+            time.sleep(0.2)  # Adjust this value to give enough time for pose updates
 
-        # Stop rotation when the bot is facing the target
+    def stop_orientation(self):
+        """Stop the robot's angular velocity."""
+        rotate_cmd = Twist()
         rotate_cmd.angular.z = 0.0
         self.cmd_vel_pub.publish(rotate_cmd)
-        self.get_logger().info("Oriented towards the target!")
-        return 0
 
 def main(args=None):
     rclpy.init(args=args)
     orient_bot = OrientBot()
 
     try:
-        # Example of orienting towards a point (3, 4) for testing
-        orient_bot.orient_towards(3.0, 4.0)
+        # Keep the orient_bot node running and listening for new target coordinates
+        rclpy.spin(orient_bot)
 
     except KeyboardInterrupt:
         pass
 
     finally:
-        # Cleanup
         orient_bot.destroy_node()
         rclpy.shutdown()
 

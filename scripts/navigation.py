@@ -2,7 +2,8 @@
 
 import rclpy
 from geometry_msgs.msg import Twist, Point, PoseStamped
-from orient_bot import OrientBot  # Make sure orient_bot.py exists and is correct
+from std_msgs.msg import String  # For controlling the orient_bot
+import json
 import time
 import math
 
@@ -13,8 +14,9 @@ farthest_obstacle = None
 oriented = False
 decrement= 0.0
 
-# Publisher for /cmd_vel
+# Publisher for /cmd_vel and /orient_command
 cmd_vel_publisher = None
+orient_command_publisher = None
 
 def position_callback(msg):
     """Callback for receiving robot's position from /base_link_coordinates."""
@@ -28,19 +30,23 @@ def obstacle_callback(msg):
     farthest_obstacle = (msg.x, msg.y)
     print(f'Farthest obstacle received: (x: {msg.x}, y: {msg.y})')
 
-def orient_towards_obstacle(orient_bot):
-    """Orients the robot towards the farthest obstacle using the OrientBot."""
-    global farthest_obstacle, oriented
-    if farthest_obstacle:
-        target_x, target_y = farthest_obstacle
-        print(f'Oriented towards obstacle at: (x: {target_x}, y: {target_y})')
+def send_orient_command(action, target_x=None, target_y=None):
+    """Send a command to the orient_bot to start or stop orientation."""
+    global orient_command_publisher
 
-        # Use OrientBot to orient towards the obstacle
-        orient_bot.orient_towards(target_x, target_y)
-        oriented = True
-    else:
-        print('No farthest obstacle available for orientation.')
-        oriented = False
+    command = {
+        "action": action
+    }
+    
+    if target_x is not None and target_y is not None:
+        command["target_x"] = target_x
+        command["target_y"] = target_y
+
+    # Convert command to a JSON string and publish it
+    msg = String()
+    msg.data = json.dumps(command)
+    orient_command_publisher.publish(msg)
+    print(f"Sent orientation command: {msg.data}")
 
 def move(target_distance):
     """Moves the robot forward by a specific target distance."""
@@ -103,13 +109,14 @@ def rotate(rotation_duration, speed=0.5):
     print("Rotation complete!")
 
 def main(args=None):
-    global cmd_vel_publisher, node, farthest_obstacle, oriented, decrement # Declare global variables
+    global cmd_vel_publisher, orient_command_publisher, node, farthest_obstacle, oriented, decrement # Declare global variables
 
     rclpy.init(args=args)
     node = rclpy.create_node('navigation_node')
 
-    # Publisher for /cmd_vel
+    # Publisher for /cmd_vel and /orient_command
     cmd_vel_publisher = node.create_publisher(Twist, '/cmd_vel', 10)
+    orient_command_publisher = node.create_publisher(String, '/orient_command', 10)
 
     # Subscribers for /farthest_obstacle and /base_link_coordinates
     node.create_subscription(Point, '/farthest_obstacle', obstacle_callback, 10)
@@ -131,7 +138,14 @@ def main(args=None):
             rotate(2.0)
 
             # Orient the robot towards the farthest obstacle
-            orient_towards_obstacle(orient_bot)
+            target_x, target_y = farthest_obstacle
+            send_orient_command('start', target_x=target_x, target_y=target_y)
+
+            # Wait for the orientation to complete (add a small delay or check periodically)
+            time.sleep(5)
+
+            # Stop the orientation command
+            send_orient_command('stop')
 
             # Once oriented, move towards the obstacle
             if oriented:
@@ -142,7 +156,6 @@ def main(args=None):
 
             # Reset for next cycle
             farthest_obstacle = None
-            oriented = False
             print("Starting new cycle...\n")
 
     except KeyboardInterrupt:
